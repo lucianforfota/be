@@ -6,10 +6,21 @@ public class ProductRequestDTO {
     private Double price;
     private Long categoryId;
 
-    public ProductRequestDTO(String name, Double price, Long categoryId) {
+    private Integer stock;
+
+    public ProductRequestDTO(String name, Double price, Long categoryId, Integer stock) {
         this.name = name;
         this.price = price;
         this.categoryId = categoryId;
+        this.stock = stock;
+    }
+
+    public Integer getStock() {
+        return stock;
+    }
+
+    public void setStock(Integer stock) {
+        this.stock = stock;
     }
 
     public String getName() {

@@ -3,6 +3,8 @@ package com.onlineshop.be.entities;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 
+import java.util.List;
+
 @Entity
 public class User {
 
@@ -19,7 +21,30 @@ public class User {
     @OneToOne(mappedBy="user")
     private WishList wishList;
 
+
+    @OneToMany(mappedBy="user")
+    private List<CartItem> cartItems;
+
+    @OneToMany(mappedBy="user")
+    private List<Order> orders;
+
     public User(){}
+
+    public List<Order> getOrders() {
+        return orders;
+    }
+
+    public void setOrders(List<Order> orders) {
+        this.orders = orders;
+    }
+
+    public List<CartItem> getCartItems() {
+        return cartItems;
+    }
+
+    public void setCartItems(List<CartItem> cartItems) {
+        this.cartItems = cartItems;
+    }
 
     public Long getId() {
         return id;

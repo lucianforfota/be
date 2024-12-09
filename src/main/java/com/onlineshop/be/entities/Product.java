@@ -24,7 +24,41 @@ public class Product {
     @OneToMany(mappedBy = "product")
     private List<WishListItem> wishListItems;
 
+    @OneToMany(mappedBy="product")
+    private List<CartItem> cartItems;
+
+    @OneToMany(mappedBy="product")
+    private List<OrderItem> orderItems;
+
+    @Column
+    private Integer stock;
+
+
     public Product(){}
+
+    public List<OrderItem> getOrderItems() {
+        return orderItems;
+    }
+
+    public void setOrderItems(List<OrderItem> orderItems) {
+        this.orderItems = orderItems;
+    }
+
+    public Integer getStock() {
+        return stock;
+    }
+
+    public void setStock(Integer stock) {
+        this.stock = stock;
+    }
+
+    public List<CartItem> getCartItems() {
+        return cartItems;
+    }
+
+    public void setCartItems(List<CartItem> cartItems) {
+        this.cartItems = cartItems;
+    }
 
     public List<WishListItem> getWishListItems() {
         return wishListItems;
