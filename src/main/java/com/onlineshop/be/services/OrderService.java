@@ -1,12 +1,10 @@
 package com.onlineshop.be.services;
 
-import com.onlineshop.be.entities.CartItem;
-import com.onlineshop.be.entities.Order;
-import com.onlineshop.be.entities.OrderItem;
-import com.onlineshop.be.entities.User;
+import com.onlineshop.be.entities.*;
 import com.onlineshop.be.exceptions.ResourceNotFoundException;
 import com.onlineshop.be.repositories.CartItemRepository;
 import com.onlineshop.be.repositories.OrderRepository;
+import com.onlineshop.be.repositories.ProductRepository;
 import com.onlineshop.be.repositories.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +13,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
@@ -24,12 +24,21 @@ public class OrderService {
 
     private OrderRepository orderRepository;
 
+    private CartService cartService;
+
+    private ProductRepository productRepository;
+
     @Autowired
-    public OrderService(CartItemRepository cartItemRepository, UserRepository userRepository, OrderRepository orderRepository) {
+    public OrderService(CartItemRepository cartItemRepository, CartService cartService, UserRepository userRepository, OrderRepository orderRepository, ProductRepository productRepository) {
         this.cartItemRepository = cartItemRepository;
         this.userRepository = userRepository;
         this.orderRepository = orderRepository;
+        this.productRepository = productRepository;
+        this.cartService = cartService;
     }
+
+
+
 
     @Transactional
     public Order addOrder(Long userId){
@@ -47,21 +56,41 @@ public class OrderService {
 
         User user = userRepository.findById(userId).orElseThrow(()->new ResourceNotFoundException("category not found"));
         List<CartItem> cartItems = cartItemRepository.findAllByUser_Id(userId);
-        Order order = new Order();
-        List<OrderItem> orderItems = new ArrayList<>();
-        for (CartItem cartItem: cartItems){
-            OrderItem orderItem = new OrderItem();
-            orderItem.setQuantity(cartItem.getQuantity());
-            orderItem.setProduct(cartItem.getProduct());
-            orderItem.setOrder(order);
-            orderItem.setPrice(cartItem.getQuantity()*cartItem.getProduct().getPrice());
-            orderItems.add(orderItem);
+        if (cartItems.size()==0){
+            throw new ResourceNotFoundException("order cannot be placed because cart is empty");
         }
+
+        Order order = new Order();
+        List<OrderItem> orderItems = cartItems.stream()
+                .map(cartItem -> mapFromCartItemToOrderItem(cartItem, order))
+                .collect(Collectors.toList());
+
         order.setCreatedAt(LocalDateTime.now());
         order.setUser(user);
         order.setOrderItems(orderItems);
+        order.setTotalPrice(cartService.computeTotalPrice(cartItems));
+        //updatez stockurile produselor din cos
+        for (CartItem cartItem : cartItems){
+            Product cartProduct = cartItem.getProduct();
+            cartProduct.setStock(cartProduct.getStock()-cartItem.getQuantity());
+            productRepository.save(cartProduct);
+        }
         cartItemRepository.deleteAllByUser_Id(userId);
         return orderRepository.save(order);
+    }
+
+
+    public OrderItem mapFromCartItemToOrderItem (CartItem cartItem, Order order){
+        OrderItem orderItem = new OrderItem();
+        orderItem.setQuantity(cartItem.getQuantity());
+        orderItem.setProduct(cartItem.getProduct());
+        orderItem.setOrder(order);
+        orderItem.setPrice(cartItem.getQuantity()*cartItem.getProduct().getPrice());
+        return orderItem;
+    }
+
+    public List<Order> findOrdersByUserId(Long userId){
+        return orderRepository.findAllByUser_IdOrderByCreatedAt(userId);
     }
 
 }
