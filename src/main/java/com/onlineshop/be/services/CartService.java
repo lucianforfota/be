@@ -12,6 +12,7 @@ import com.onlineshop.be.repositories.ProductRepository;
 import com.onlineshop.be.repositories.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ public class CartService {
     public CartItem addToCart(CartRequestDTO cartRequestDTO){
         Product product = productRepository.findById(cartRequestDTO.getProductId()).orElseThrow(()->new ResourceNotFoundException("category not found"));
         User user = userRepository.findById(cartRequestDTO.getUserId()).orElseThrow(()->new ResourceNotFoundException("category not found"));
+        //String usernameLoggedIn = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
         if (cartRequestDTO.getQuantity()>product.getStock()){
             throw new ResourceNotFoundException("out of stock");
         }
